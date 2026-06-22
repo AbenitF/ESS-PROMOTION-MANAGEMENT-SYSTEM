@@ -1,14 +1,13 @@
-
 -- Create database
-CREATE DATABASE IF NOT EXISTS `ess_promotion_db`
+CREATE DATABASE IF NOT EXISTS ess_promotion_db
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
-USE `ess_promotion_db`;
+USE ess_promotion_db;
 
 -- ─── Table: admins ────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS admins (
-  id            INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
+  id            INT UNSIGNED    PRIMARY KEY, -- No AUTO_INCREMENT (Manual ID generation)
   full_name     VARCHAR(100)    NOT NULL,
   username      VARCHAR(50)     NOT NULL UNIQUE,
   email         VARCHAR(150)    NOT NULL UNIQUE,
@@ -26,19 +25,24 @@ CREATE TABLE IF NOT EXISTS admins (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
   COMMENT='System administrators and their roles';
+
 -- ─── Table: news ──────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS news (
-  id          INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
+  id          INT UNSIGNED    PRIMARY KEY, -- No AUTO_INCREMENT (Manual ID generation)
   title       VARCHAR(255)    NOT NULL,
   content     LONGTEXT        NOT NULL,
   image_path  VARCHAR(500)    DEFAULT NULL COMMENT 'Relative path to uploaded image',
   created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP
                               ON UPDATE CURRENT_TIMESTAMP,
+  
+  -- Automatically calculates exactly 7 days from the creation timestamp
+  expires_at  DATETIME        GENERATED ALWAYS AS (created_at + INTERVAL 7 DAY) STORED,
 
   INDEX idx_news_created (created_at),
+  INDEX idx_news_expiry  (expires_at), -- Index added for fast employee feed filtering
   FULLTEXT INDEX ft_news_search (title, content)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
-  COMMENT='Organizational news and announcements';
+  COMMENT='Organizational news and announcements with automatic 7-day expiration';
